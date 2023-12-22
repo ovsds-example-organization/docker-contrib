@@ -1,0 +1,4 @@
+{
+  "*.{md,yaml,json,js}": ["prettier --check"],
+  "Dockerfile": ["dockerfilelint --config ."]
+}

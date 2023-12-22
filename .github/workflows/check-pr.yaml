@@ -1,0 +1,47 @@
+name: Check PR
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+jobs:
+  check-pr:
+    runs-on: ubuntu-20.04
+
+    permissions:
+      contents: read
+
+    container:
+      image: ghcr.io/${{ github.repository_owner }}/ubuntu-ci:jammy-0.1.0
+      credentials:
+        username: ${{ secrets.ROBOT_GITHUB_USER }}
+        password: ${{ secrets.ROBOT_GITHUB_READ_PACKAGES_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          task ci-init
+
+      - name: Lint PR
+        run: |
+          task lint
+
+      - name: Login to Github Container Registry
+        env:
+          GITHUB_TOKEN: ${{ secrets.ROBOT_GITHUB_READ_PACKAGES_TOKEN }}
+        run: |
+          task ci-login-ghcr
+
+      - name: Configure builder
+        run: |
+          task images:configure-builder
+
+      - name: Build images
+        run: |
+          task test

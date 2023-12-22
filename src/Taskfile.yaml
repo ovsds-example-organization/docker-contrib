@@ -1,0 +1,57 @@
+version: 3
+
+silent: true
+
+tasks:
+  bake:
+    vars:
+      BAKE_FILES:
+        sh: find */*/docker-bake.hcl
+    cmds:
+      - docker buildx bake
+        --file docker-bake.hcl
+        {{range $i, $file := .BAKE_FILES | splitLines }} --file {{$file}}{{end}}
+        {{.CLI_ARGS}}
+
+  _build:
+    internal: true
+    requires:
+      vars:
+        - TAG_POSTFIX
+    cmds:
+      - task bake --
+        {{ if .PUSH }}--push{{ end }}
+        {{.BAKE_TARGET}}
+    vars:
+      push: false
+    env:
+      TAG_POSTFIX: "{{.TAG_POSTFIX}}"
+
+  build:
+    desc: Build release for all images, or for BAKE_TARGET if set
+    requires:
+      vars:
+        - IMAGE_VERSION
+    cmds:
+      - task: _build
+        vars:
+          TAG_POSTFIX: "{{.IMAGE_VERSION}}"
+
+  release:
+    desc: Build and push release for all images, or for BAKE_TARGET if set
+    requires:
+      vars:
+        - IMAGE_VERSION
+    cmds:
+      - task: _build
+        vars:
+          PUSH: true
+          TAG_POSTFIX: "{{.IMAGE_VERSION}}"
+
+  configure-builder:
+    desc: Configure buildx for multi-arch builds
+    cmds:
+      - echo 'Configuring buildx...'
+      - docker buildx create
+        --driver docker-container
+        --use

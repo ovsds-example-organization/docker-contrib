@@ -1,0 +1,106 @@
+version: 3
+
+silent: true
+
+includes:
+  images:
+    taskfile: ./src
+    dir: ./src
+
+vars:
+  NENV: "node_modules"
+
+  dockerfiles:
+    sh: find src/*/*/Dockerfile
+
+tasks:
+  _prettier:
+    internal: true
+    cmds:
+      - "{{.NENV}}/.bin/prettier {{.COMMAND}}"
+
+  _dockerfilelint:
+    internal: true
+    cmds:
+      - "{{.NENV}}/.bin/dockerfilelint --config . {{.COMMAND}}"
+
+  init:
+    desc: Initialize project environment
+    cmds:
+      - echo 'Installing node version...'
+      - . ${HOME}/.nvm/nvm.sh && nvm install
+
+      - echo 'Installing node dependencies...'
+      - npm install
+
+      - echo 'Installing husky pre-commit...'
+      - npm run prepare-husky
+
+  lint:
+    desc: Lint project
+    cmds:
+      - echo 'Running prettier checks...'
+      - task: _prettier
+        vars: { COMMAND: "--check ." }
+
+      - echo 'Running dockerfilelint checks...'
+      - for: { var: dockerfiles }
+        task: _dockerfilelint
+        vars: { COMMAND: "{{.ITEM}}" }
+
+  lint-fix:
+    desc: Lint fix project
+    cmds:
+      - echo 'Running prettier fixes...'
+      - task: _prettier
+        vars: { COMMAND: "--write ." }
+
+      - echo 'Running dockerfilelint checks...'
+      - for: { var: dockerfiles }
+        task: _dockerfilelint
+        vars: { COMMAND: "{{.ITEM}}" }
+
+  test:
+    desc: Test project, building beta images
+    cmds:
+      - task: images:build
+        vars: { IMAGE_VERSION: "test" }
+
+  clean:
+    desc: Clean project environment
+    cmds:
+      - echo 'Cleaning node dependencies...'
+      - rm -rf {{.NENV}}
+
+  login-gh-cli:
+    desc: Login to GitHub CLI
+    cmds:
+      - echo 'Logging to GitHub CLI...'
+      - gh auth login
+        --scopes=read:packages,write:packages
+        --hostname github.com
+        --git-protocol https
+        --web
+
+  login-ghcr:
+    desc: Login to GitHub Container Registry
+    cmds:
+      - echo 'Logging to GitHub Container Registry...'
+      - gh config get -h github.com oauth_token | docker login ghcr.io -u USERNAME --password-stdin
+
+  # CI-specific
+
+  ci-init:
+    desc: Initialize project environment in CI
+    cmds:
+      - echo 'Installing node dependencies...'
+      - npm install
+
+  ci-login-ghcr:
+    desc: Login to GitHub Container Registry in CI
+    requires:
+      vars:
+        - GITHUB_TOKEN
+    cmds:
+      - echo 'Logging to GitHub Container Registry...'
+      - echo {{.GITHUB_TOKEN}} | docker login ghcr.io -u USERNAME --password-stdin
