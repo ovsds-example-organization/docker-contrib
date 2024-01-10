@@ -4,7 +4,7 @@ target "ubuntu__jammy" {
         ubuntu-vanilla = "docker-image://ubuntu:jammy-20231211.1"
     }
     dockerfile = "Dockerfile"
-    platforms = PLATFORMS
+    platforms = DISABLE_PLATFORMS ? null : PLATFORMS
     labels = LABELS
     tags = tags("ubuntu", "jammy")
 }

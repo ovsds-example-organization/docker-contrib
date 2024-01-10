@@ -1,0 +1,129 @@
+name: 🔒 Security Scan
+
+on:
+  schedule:
+    # Every Sunday at 00:00 UTC
+    - cron: 0 0 * * 0
+  workflow_dispatch:
+
+jobs:
+  get-latest-version:
+    name: "Get latest version"
+    runs-on: ubuntu-22.04
+
+    outputs:
+      version: ${{ steps.get-latest-version.outputs.version }}
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get latest version
+        id: get-latest-version
+        working-directory: .github/.scripts
+        run: echo "version=$(./gh_release_get_latest_version.sh)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  check-if-report-exists:
+    name: "Check if issue exists"
+    runs-on: ubuntu-22.04
+
+    needs: [get-latest-version]
+
+    outputs:
+      already_exists: ${{ steps.check-if-report-exists.outputs.already_exists }}
+
+    permissions:
+      contents: read
+      issues: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check if issue exists
+        id: check-if-report-exists
+        working-directory: .github/.scripts
+        env:
+          SEARCH_QUERY: Failed security scan for version ${{ needs.get-latest-version.outputs.version }} in:title
+          GH_TOKEN: ${{ github.token }}
+        run: echo "already_exists=$(./gh_issue_check_if_exists.sh)" >> "$GITHUB_OUTPUT"
+
+  security-scan:
+    name: "Run security scan"
+    runs-on: ubuntu-22.04
+
+    needs: [get-latest-version, check-if-report-exists]
+    if: ${{ needs.check-if-report-exists.outputs.already_exists == 'false' }}
+
+    outputs:
+      report: ${{ steps.run-security-scan.outputs.report }}
+      exit_code: ${{ steps.run-security-scan.outputs.exit_code }}
+
+    permissions:
+      contents: read
+
+    container:
+      image: ghcr.io/${{ github.repository_owner }}/ubuntu-ci:jammy-0.3.0
+      credentials:
+        username: ${{ secrets.ROBOT_GITHUB_USER }}
+        password: ${{ secrets.ROBOT_GITHUB_READ_PACKAGES_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Github Container Registry
+        env:
+          GITHUB_TOKEN: ${{ secrets.ROBOT_GITHUB_WRITE_PACKAGES_TOKEN }}
+        run: |
+          task ci-login-ghcr
+
+      - name: Run security scan
+        id: run-security-scan
+        continue-on-error: true
+        env:
+          IMAGE_VERSION: ${{ needs.get-latest-version.outputs.version }}
+          PYPI_READER_PASSWORD: ${{ secrets.PYPI_READER_PASSWORD }}
+        run: |
+          set +e
+          result=$(task images:security-scan)
+          exit_code=$?
+          set -e
+          {
+            echo "report<<EOF"
+            echo "$result"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
+
+  create-issue:
+    name: "Create issue"
+    runs-on: ubuntu-22.04
+
+    permissions:
+      contents: read
+      issues: write
+
+    needs: [security-scan, get-latest-version]
+    if: ${{ needs.security-scan.outputs.exit_code != 0 }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fix git safe directory to use git commands
+        working-directory: .github/.scripts
+        run: ./git_fix_safe_directory.sh
+
+      - name: Create issue
+        working-directory: .github/.scripts
+        env:
+          TITLE: Failed security scan for version ${{ needs.get-latest-version.outputs.version }}
+          BODY: "Please check the attached report: \n```\n${{ needs.security-scan.outputs.report }}\n```"
+          GH_TOKEN: ${{ github.token }}
+        run: ./gh_issue_create.sh

@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-20.04
 
     container:
-      image: ghcr.io/${{ github.repository_owner }}/ubuntu-ci:jammy-0.1.0
+      image: ghcr.io/${{ github.repository_owner }}/ubuntu-ci:jammy-0.3.0
       credentials:
         username: ${{ secrets.ROBOT_GITHUB_USER }}
         password: ${{ secrets.ROBOT_GITHUB_READ_PACKAGES_TOKEN }}
