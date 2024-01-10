@@ -5,6 +5,9 @@ jobs:
   assign-pr-author:
     runs-on: ubuntu-latest
 
+    permissions:
+      pull-requests: write
+
     steps:
       - uses: samspills/assign-pr-to-author@v1.0
         if: github.event_name == 'pull_request' && github.event.action == 'opened'

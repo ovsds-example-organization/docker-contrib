@@ -2,7 +2,7 @@
 set -eu
 export DEBIAN_FRONTEND=noninteractive
 
-echo 'Installing native libs...'
+echo 'Installing trivy...'
 
 apt-get install --yes \
     apt-transport-https \
