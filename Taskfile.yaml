@@ -19,6 +19,11 @@ tasks:
     cmds:
       - "{{.NENV}}/.bin/prettier {{.COMMAND}}"
 
+  _with_nvm:
+    internal: true
+    cmds:
+      - "source ${HOME}/.nvm/nvm.sh && nvm use && {{.COMMAND}}"
+
   _dockerfilelint:
     internal: true
     cmds:
@@ -28,13 +33,16 @@ tasks:
     desc: Initialize project environment
     cmds:
       - echo 'Installing node version...'
-      - . ${HOME}/.nvm/nvm.sh && nvm install
+      - task: _with_nvm
+        vars: { COMMAND: "nvm install" }
 
       - echo 'Installing node dependencies...'
-      - npm install
+      - task: _with_nvm
+        vars: { COMMAND: "npm install" }
 
       - echo 'Installing husky pre-commit...'
-      - npm run prepare-husky
+      - task: _with_nvm
+        vars: { COMMAND: "npm run prepare-husky" }
 
   lint:
     desc: Lint project
@@ -72,6 +80,17 @@ tasks:
       - echo 'Cleaning node dependencies...'
       - rm -rf {{.NENV}}
 
+  update-dependencies:
+    desc: Update dependencies
+    cmds:
+      - echo 'Updating node dependencies...'
+      - task: _with_nvm
+        vars: { COMMAND: "npm update" }
+      - task: _with_nvm
+        vars: { COMMAND: "npm outdated" }
+      - task: _with_nvm
+        vars: { COMMAND: "npm audit" }
+
   login-gh-cli:
     desc: Login to GitHub CLI
     cmds:
@@ -99,8 +118,8 @@ tasks:
   ci-login-ghcr:
     desc: Login to GitHub Container Registry in CI
     requires:
-      vars:
+      env:
         - GITHUB_TOKEN
     cmds:
       - echo 'Logging to GitHub Container Registry...'
-      - echo {{.GITHUB_TOKEN}} | docker login ghcr.io -u USERNAME --password-stdin
+      - echo "${GITHUB_TOKEN}" | docker login ghcr.io -u USERNAME --password-stdin
