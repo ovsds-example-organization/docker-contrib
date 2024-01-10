@@ -13,6 +13,7 @@ jobs:
 
     permissions:
       contents: read
+      pull-requests: write
 
     container:
       image: ghcr.io/${{ github.repository_owner }}/ubuntu-ci:jammy-0.1.0
