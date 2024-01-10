@@ -71,8 +71,8 @@ tasks:
   test:
     desc: Test project, building beta images
     cmds:
-      - task: images:build
-        vars: { IMAGE_VERSION: "test" }
+      - task: images:build-beta
+      - task: images:security-scan-beta
 
   clean:
     desc: Clean project environment

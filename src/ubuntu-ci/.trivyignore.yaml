@@ -1,0 +1,5 @@
+vulnerabilities:
+  # not exploitable in CI environment
+  # unfixed
+  - id: CVE-2023-6176
+  - id: CVE-2024-0193

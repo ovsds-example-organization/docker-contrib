@@ -4,7 +4,7 @@ target "ubuntu-ci__jammy" {
         ubuntu = "target:ubuntu__jammy"
     }
     dockerfile = "Dockerfile"
-    platforms = ["linux/amd64"]
+    platforms = DISABLE_PLATFORMS ? null : ["linux/amd64"]
     labels = LABELS
     tags = tags("ubuntu-ci", "jammy")
 }

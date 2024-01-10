@@ -20,12 +20,49 @@ tasks:
         - TAG_POSTFIX
     cmds:
       - task bake --
-        {{ if .PUSH }}--push{{ end }}
+        {{ if eq .PUSH "true" }}--push{{ end }}
+        {{ if eq .LOAD "true" }}--load{{ end }}
+        {{ if eq .PRINT "true" }}--print{{ end }}
         {{.BAKE_TARGET}}
     vars:
-      push: false
+      PUSH: "{{.PUSH | default false}}"
+      LOAD: "{{.LOAD | default false}}"
+      PRINT: "{{.PRINT | default false}}"
     env:
       TAG_POSTFIX: "{{.TAG_POSTFIX}}"
+      DISABLE_PLATFORMS: "{{.DISABLE_PLATFORMS | default false}}"
+
+  _security-scan:
+    internal: true
+    vars:
+      image_name:
+        sh: 'echo "{{.IMAGE}}" | cut -d: -f1 | cut -d/ -f3'
+    cmds:
+      - trivy image
+        --severity=HIGH,CRITICAL
+        --scanners vuln,misconfig,secret
+        --exit-code 1
+        --ignorefile {{.image_name}}/.trivyignore.yaml
+        {{.IMAGE}}
+
+  build-beta:
+    desc: Build beta for all images, or for BAKE_TARGET if set
+    cmds:
+      - task: _build
+        vars:
+          TAG_POSTFIX: beta
+          LOAD: true
+          DISABLE_PLATFORMS: true
+
+  security-scan-beta:
+    desc: Run security scan for beta images
+    vars:
+      IMAGES:
+        sh: task build-beta PRINT=true | jq -r '.target | map(.tags[]) | .[]'
+    cmds:
+      - for: { var: IMAGES }
+        task: _security-scan
+        vars: { IMAGE: "{{.ITEM}}" }
 
   build:
     desc: Build release for all images, or for BAKE_TARGET if set
@@ -47,6 +84,16 @@ tasks:
         vars:
           PUSH: true
           TAG_POSTFIX: "{{.IMAGE_VERSION}}"
+
+  security-scan:
+    desc: Run security scan for images
+    vars:
+      IMAGES:
+        sh: task build PRINT=true IMAGE_VERSION={{.IMAGE_VERSION}} | jq -r '.target | map(.tags[]) | .[]'
+    cmds:
+      - for: { var: IMAGES }
+        task: _security-scan
+        vars: { IMAGE: "{{.ITEM}}" }
 
   configure-builder:
     desc: Configure buildx for multi-arch builds

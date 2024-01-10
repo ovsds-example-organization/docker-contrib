@@ -4,7 +4,7 @@ target "python-dev__3_10-jammy" {
         ubuntu = "target:ubuntu__jammy"
     }
     dockerfile = "Dockerfile"
-    platforms = PLATFORMS
+    platforms = DISABLE_PLATFORMS ? null : PLATFORMS
     labels = LABELS
     tags = tags("python-dev", "3.10-jammy")
 }

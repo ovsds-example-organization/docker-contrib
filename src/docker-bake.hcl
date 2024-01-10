@@ -20,6 +20,10 @@ variable "PLATFORMS" {
   ]
 }
 
+variable "DISABLE_PLATFORMS" {
+  default = false
+}
+
 group "default" {
   targets = [
     "ubuntu__jammy",
