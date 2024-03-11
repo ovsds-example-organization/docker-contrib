@@ -38,7 +38,7 @@ tasks:
 
       - echo 'Installing node dependencies...'
       - task: _with_nvm
-        vars: { COMMAND: "npm install" }
+        vars: { COMMAND: "npm clean-install" }
 
       - echo 'Installing husky pre-commit...'
       - task: _with_nvm
@@ -80,7 +80,7 @@ tasks:
       - echo 'Cleaning node dependencies...'
       - rm -rf {{.NENV}}
 
-  update-dependencies:
+  dependencies-update:
     desc: Update dependencies
     cmds:
       - echo 'Updating node dependencies...'

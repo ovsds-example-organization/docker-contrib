@@ -2,16 +2,24 @@
   "private": true,
   "name": "docker-contrib",
   "devDependencies": {
-    "@commitlint/cli": "^17.1.2",
-    "@commitlint/config-conventional": "^17.1.0",
+    "@commitlint/cli": "^19.0.3",
+    "@commitlint/config-conventional": "^19.0.3",
     "dockerfilelint": "1.8.0",
-    "husky": "^8.0.1",
-    "lint-staged": "^13.0.3",
-    "prettier": "2.8.3"
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "prettier": "3.2.5"
   },
   "hooks": {
     "pre-commit": "lint-staged",
     "commit-msg": "commitlint"
+  },
+  "lint-staged": {
+    "*.{md,yaml,json,js}": [
+      "prettier --check"
+    ],
+    "Dockerfile": [
+      "dockerfilelint --config ."
+    ]
   },
   "scripts": {
     "prepare-husky": "husky install"
