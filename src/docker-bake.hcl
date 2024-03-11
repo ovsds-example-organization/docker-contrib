@@ -1,4 +1,4 @@
-variable "REGISTRY" {  default = "ghcr.io/ovsds-example-organizaton/" }
+variable "REGISTRY" {  default = "ghcr.io/ovsds-example-organization/" }
 variable "TAG_POSTFIX" {}
 
 function "tags" {
@@ -8,7 +8,7 @@ function "tags" {
 
 variable "LABELS" {
   default = {
-    "org.opencontainers.image.source"   = "https://github.com/ovsds-example-organizaton/docker-contrib"
+    "org.opencontainers.image.source"   = "https://github.com/ovsds-example-organization/docker-contrib"
     "org.opencontainers.image.licenses" = "MIT"
   }
 }
