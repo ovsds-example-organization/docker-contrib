@@ -7,5 +7,5 @@ RUN chmod a+x /tmp/scripts/*.sh && \
     /tmp/scripts && \
     rm -rf /tmp/scripts
 
-ENV PATH /root/.nvm/versions/node/v16.15.1/bin:${PATH}
-ENV NODE_PATH /root/.nvm/versions/node/v16.15.1/lib/node_modules
+ENV PATH /root/.nvm/versions/node/v21.5.0/bin:${PATH}
+ENV NODE_PATH /root/.nvm/versions/node/v21.5.0/lib/node_modules

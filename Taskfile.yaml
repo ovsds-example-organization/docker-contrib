@@ -113,7 +113,7 @@ tasks:
     desc: Initialize project environment in CI
     cmds:
       - echo 'Installing node dependencies...'
-      - npm install
+      - npm clean-install
 
   ci-login-ghcr:
     desc: Login to GitHub Container Registry in CI
