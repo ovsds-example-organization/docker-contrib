@@ -6,14 +6,22 @@ export PIP_ROOT_USER_ACTION=ignore
 echo 'Installing python...'
 
 apt-get install --yes \
-  python3 \
-  python3-pip \
-  python3-venv \
-  python3-wheel \
-  python3-setuptools
-ln -s /usr/bin/python3 /usr/bin/python
+  software-properties-common
+add-apt-repository ppa:deadsnakes/ppa -y
 
-python -m pip install --upgrade pip
+apt-get install --yes \
+  python3.12 \
+  python3.12-venv
+
+ln -s /usr/bin/python3.12 /usr/bin/python
+
+curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12
+
+python -m pip install --upgrade \
+    pip \
+    setuptools \
+    wheel
+
 mkdir --parents ~/.config/pip
 {
   echo '[global]'
