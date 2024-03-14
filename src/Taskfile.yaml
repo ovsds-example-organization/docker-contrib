@@ -87,6 +87,9 @@ tasks:
 
   security-scan:
     desc: Run security scan for images
+    requires:
+      vars:
+        - IMAGE_VERSION
     vars:
       IMAGES:
         sh: task build PRINT=true IMAGE_VERSION={{.IMAGE_VERSION}} | jq -r '.target | map(.tags[]) | .[]'

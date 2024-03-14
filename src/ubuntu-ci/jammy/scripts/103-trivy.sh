@@ -16,3 +16,5 @@ echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.
 apt-get update
 apt-get install --yes \
     trivy
+
+trivy image --download-db-only
